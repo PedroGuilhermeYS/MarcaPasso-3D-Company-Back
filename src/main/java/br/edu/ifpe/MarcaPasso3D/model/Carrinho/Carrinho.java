@@ -27,7 +27,6 @@ public class Carrinho {
         this.criadoEm = LocalDate.now();
     }
 
-    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

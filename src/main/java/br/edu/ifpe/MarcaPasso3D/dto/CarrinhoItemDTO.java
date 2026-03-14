@@ -21,7 +21,6 @@ public class CarrinhoItemDTO {
         this.precoUnitario = precoUnitario;
     }
 
-    // Getters
     public Long getIdItem() { return idItem; }
     public Long getIdProduto() { return idProduto; }
     public String getNomeProduto() { return nomeProduto; }

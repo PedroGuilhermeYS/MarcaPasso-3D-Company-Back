@@ -38,7 +38,6 @@ public class Endereco {
     @Column(name = "cep", nullable = false)
     private String cep;
 
-    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

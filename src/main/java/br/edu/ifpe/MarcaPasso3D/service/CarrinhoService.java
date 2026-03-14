@@ -15,11 +15,11 @@ import java.util.stream.Collectors;
 public class CarrinhoService {
 
     private final CarrinhoRepository carrinhoRepository;
-    private final CarrinhoItemRepository carrinhoItemRepository; // 👈 ADICIONADO
+    private final CarrinhoItemRepository carrinhoItemRepository; 
 
-    public CarrinhoService(CarrinhoRepository carrinhoRepository, CarrinhoItemRepository carrinhoItemRepository) { // 👈 ADICIONADO
+    public CarrinhoService(CarrinhoRepository carrinhoRepository, CarrinhoItemRepository carrinhoItemRepository) {
         this.carrinhoRepository = carrinhoRepository;
-        this.carrinhoItemRepository = carrinhoItemRepository; // 👈 ADICIONADO
+        this.carrinhoItemRepository = carrinhoItemRepository;
     }
 
     public List<CarrinhoItemDTO> getItensByUsuario(Long idUsuario) {
@@ -36,8 +36,7 @@ public class CarrinhoService {
                 ))
                 .collect(Collectors.toList());
     }
-
-    // 👈 MÉTODO NOVO ADICIONADO
+    
     public void removerItem(Long idItem) {
         CarrinhoItem item = carrinhoItemRepository.findById(idItem)
                 .orElseThrow(() -> new RuntimeException("Item não encontrado: " + idItem));

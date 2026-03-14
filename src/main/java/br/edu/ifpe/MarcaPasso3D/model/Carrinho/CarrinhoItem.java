@@ -28,7 +28,6 @@ public class CarrinhoItem {
     @Column(name = "preco_unitario", nullable = false)
     private BigDecimal precoUnitario;
 
-    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
