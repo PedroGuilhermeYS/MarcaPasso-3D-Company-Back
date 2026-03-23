@@ -18,6 +18,15 @@ public class ProdutoService {
         return repository.findAll(pageable);
     }
 
+    public List<Produto> consultarTodos() {
+        return repository.findAll();
+    }
+
+    public Produto consultarPorId(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto nao encontrado: " + id));
+    }
+
     public List<Produto> ordenarPorNome() {
         return repository.findAllByOrderByNomeAsc();
     }
@@ -32,5 +41,29 @@ public class ProdutoService {
 
     public List<Produto> consultarNovaTela(String categoria) {
         return repository.findByCategoria(categoria);
+    }
+
+    public Produto cadastrar(Produto produto) {
+        return repository.save(produto);
+    }
+
+    public Produto atualizar(Long id, Produto dados) {
+        Produto produto = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto nao encontrado: " + id));
+
+        produto.setNome(dados.getNome());
+        produto.setDescricao(dados.getDescricao());
+        produto.setPreco(dados.getPreco());
+        produto.setImagemPrincipal(dados.getImagemPrincipal());
+        produto.setPersonalizavel(dados.getPersonalizavel());
+        produto.setCategoria(dados.getCategoria());
+
+        return repository.save(produto);
+    }
+
+    public void deletar(Long id) {
+        Produto produto = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto nao encontrado: " + id));
+        repository.delete(produto);
     }
 }

@@ -13,13 +13,23 @@ import java.util.List;
 @RestController
 @RequestMapping("/produtos")
 public class ProdutoController {
-    
+
     @Autowired
     private ProdutoService service;
 
     @GetMapping("/home")
     public ResponseEntity<Page<Produto>> consultarHome(@PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(service.consultarHome(pageable));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Produto>> consultarTodos() {
+        return ResponseEntity.ok(service.consultarTodos());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Produto> consultarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(service.consultarPorId(id));
     }
 
     @GetMapping("/ordenar-nome")
@@ -40,5 +50,21 @@ public class ProdutoController {
     @GetMapping("/nova-tela/{categoria}")
     public ResponseEntity<List<Produto>> consultarNovaTela(@PathVariable String categoria) {
         return ResponseEntity.ok(service.consultarNovaTela(categoria));
+    }
+
+    @PostMapping
+    public ResponseEntity<Produto> cadastrar(@RequestBody Produto produto) {
+        return ResponseEntity.status(201).body(service.cadastrar(produto));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Produto> atualizar(@PathVariable Long id, @RequestBody Produto produto) {
+        return ResponseEntity.ok(service.atualizar(id, produto));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        service.deletar(id);
+        return ResponseEntity.noContent().build();
     }
 }
