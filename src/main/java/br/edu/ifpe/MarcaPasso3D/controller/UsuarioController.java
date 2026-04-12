@@ -4,7 +4,6 @@ import br.edu.ifpe.MarcaPasso3D.dto.UsuarioRequestDTO;
 import br.edu.ifpe.MarcaPasso3D.dto.UsuarioResponseDTO;
 import br.edu.ifpe.MarcaPasso3D.service.UsuarioService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
