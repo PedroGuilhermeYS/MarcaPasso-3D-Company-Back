@@ -1,5 +1,6 @@
 package br.edu.ifpe.MarcaPasso3D.controller;
 
+import br.edu.ifpe.MarcaPasso3D.dto.AddCarrinhoItemDTO;
 import br.edu.ifpe.MarcaPasso3D.dto.CarrinhoItemDTO;
 import br.edu.ifpe.MarcaPasso3D.service.CarrinhoService;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +18,21 @@ public class CarrinhoController {
         this.carrinhoService = carrinhoService;
     }
 
+    // GET — buscar itens do carrinho
     @GetMapping("/{idUsuario}")
     public ResponseEntity<List<CarrinhoItemDTO>> getCarrinho(@PathVariable Long idUsuario) {
-        List<CarrinhoItemDTO> itens = carrinhoService.getItensByUsuario(idUsuario);
-        return ResponseEntity.ok(itens);
+        return ResponseEntity.ok(carrinhoService.getItensByUsuario(idUsuario));
     }
 
+    // POST — adicionar item ao carrinho
+    @PostMapping("/{idUsuario}/item")
+    public ResponseEntity<List<CarrinhoItemDTO>> adicionarItem(
+            @PathVariable Long idUsuario,
+            @RequestBody AddCarrinhoItemDTO dto) {
+        return ResponseEntity.ok(carrinhoService.adicionarItem(idUsuario, dto));
+    }
+
+    // DELETE — remover item do carrinho
     @DeleteMapping("/item/{idItem}")
     public ResponseEntity<Void> removerItem(@PathVariable Long idItem) {
         carrinhoService.removerItem(idItem);
