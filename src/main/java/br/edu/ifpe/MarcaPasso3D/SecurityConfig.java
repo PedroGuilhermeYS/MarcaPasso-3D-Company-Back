@@ -40,10 +40,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // Autenticação: qualquer um pode fazer login/cadastro
                         .requestMatchers("/auth/**").permitAll()
 
+                        // Produtos: qualquer um pode ver (leitura pública)
                         .requestMatchers(HttpMethod.GET, "/produtos", "/produtos/**").permitAll()
 
+                        // IA: qualquer um pode usar o chat (mesmo sem login)
+                        // A chave da API fica protegida no backend — não há risco de exposição
+                        .requestMatchers(HttpMethod.POST, "/chat-ia").permitAll()
+
+                        // Todo o restante exige autenticação
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
