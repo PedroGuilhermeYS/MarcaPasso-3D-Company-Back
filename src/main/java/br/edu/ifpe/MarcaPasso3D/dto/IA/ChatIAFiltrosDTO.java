@@ -1,26 +1,12 @@
 package br.edu.ifpe.MarcaPasso3D.dto.IA;
 
-// Representa os filtros de produto que a IA decide aplicar.
-// Exemplo: usuário pede "produtos de decoração até R$100"
-// A IA retorna: { "categoria": "Decoração", "preco": "2", ... }
 public class ChatIAFiltrosDTO {
 
-    // Categoria do produto: "Decoração", "Colecionáveis", "Acessórios" ou "" (todos)
     private String categoria;
-
-    // Se o produto é personalizável: "true", "false" ou "" (todos)
     private String personalizavel;
-
-    // Faixa de preço: "1" (até R$50), "2" (R$50-100), "3" (acima R$100) ou ""
     private String preco;
-
-    // Busca por nome: qualquer texto, ou "" para não filtrar
     private String termo;
-
-    // Ordenação: "az" (A-Z), "menor" (menor preço), "maior" (maior preço) ou ""
     private String ordenacao;
-
-    // --- Getters e Setters ---
 
     public String getCategoria() { return categoria; }
     public void setCategoria(String categoria) { this.categoria = categoria; }

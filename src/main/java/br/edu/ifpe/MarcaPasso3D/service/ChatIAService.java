@@ -16,36 +16,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Service // Marca essa classe como um serviço do Spring (camada de negócio)
+@Service
 public class ChatIAService {
 
-    // Injeta o repositório de produtos para buscar do banco de dados
     @Autowired
     private ProdutoRepository produtoRepository;
 
-    // Lê a chave da API do arquivo application.properties
-    // Assim a chave fica segura no servidor, longe do frontend
     @Value("${ia.api.key}")
     private String iaApiKey;
 
-    // ObjectMapper é a classe do Jackson (biblioteca padrão do Spring Boot)
-    // que converte objetos Java para JSON e JSON para objetos Java
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // RestTemplate é a classe do Spring para fazer requisições HTTP para outras APIs
-    // (assim o backend chama a API da IA em nome do frontend)
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // Método principal: recebe a mensagem do usuário e retorna a ação processada
     public ChatIAResponseDTO processar(String mensagemUsuario) {
         try {
-            // 1. Buscar todos os produtos do banco de dados
+
             List<Produto> produtos = produtoRepository.findAll();
 
-            // 2. Converter os produtos para JSON (para incluir no prompt da IA)
             String produtosJson = objectMapper.writeValueAsString(
                 produtos.stream().map(p -> {
-                    // Cria um mapa simples com só os dados relevantes para a IA
+                    // mapa com dados relevantes para a IA
                     Map<String, Object> dados = new HashMap<>();
                     dados.put("id", p.getId());
                     dados.put("nome", p.getNome());
@@ -57,17 +48,14 @@ public class ChatIAService {
                 }).toList()
             );
 
-            // 3. Montar o prompt completo que será enviado para a IA
             String prompt = montarPrompt(mensagemUsuario, produtosJson);
 
-            // 4. Chamar a API da IA e obter a resposta bruta (texto JSON)
+            // Chamar a API da IA
             String respostaIa = chamarApiIA(prompt);
 
-            // 5. Converter o texto JSON da IA para o nosso DTO de resposta
             return interpretarResposta(respostaIa);
 
         } catch (Exception e) {
-            // Se qualquer coisa falhar, retornar uma resposta de erro amigável
             ChatIAResponseDTO erro = new ChatIAResponseDTO();
             erro.setAcao("chat");
             erro.setMensagem("Desculpe, ocorreu um erro interno. Tente novamente em instantes.");
@@ -75,7 +63,7 @@ public class ChatIAService {
         }
     }
 
-    // Monta o texto (prompt) que instrui a IA sobre o que fazer e como responder
+    // prompt
     private String montarPrompt(String mensagemUsuario, String produtosJson) {
         return """
             Você é um assistente virtual da loja MarcaPasso3D, especializada em produtos impressos em 3D.
@@ -119,24 +107,21 @@ public class ChatIAService {
             Mensagem do cliente: """ + mensagemUsuario;
     }
 
-    // Faz a chamada HTTP para a API da IA externa e retorna o texto da resposta
+    // chamada HTTP
     private String chamarApiIA(String prompt) {
-        // Define os cabeçalhos da requisição
+       
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        // A chave da API fica aqui no backend, nunca exposta ao frontend
+       
         headers.setBearerAuth(iaApiKey);
 
-        // Corpo da requisição: { "message": "prompt aqui" }
         Map<String, String> corpo = new HashMap<>();
         corpo.put("message", prompt);
 
-        // Cria a requisição completa (cabeçalhos + corpo)
         HttpEntity<Map<String, String>> requisicao = new HttpEntity<>(corpo, headers);
 
-        // Faz o POST para a API da IA e obtém a resposta
         ResponseEntity<String> resposta = restTemplate.exchange(
-            "https://apifreellm.com/api/v1/chat", // URL da API da IA
+            "https://apifreellm.com/api/v1/chat",
             HttpMethod.POST,
             requisicao,
             String.class
@@ -144,7 +129,7 @@ public class ChatIAService {
 
         // A resposta da API vem no formato:
         // { "success": true, "response": "{ json da IA aqui }" }
-        // Precisamos extrair o campo "response" que contém o JSON da ação
+        // extrair o campo "response" que contém o JSON da ação
         try {
             JsonNode json = objectMapper.readTree(resposta.getBody());
             return json.get("response").asText();
@@ -153,29 +138,26 @@ public class ChatIAService {
         }
     }
 
-    // Converte o texto JSON retornado pela IA para o nosso DTO ChatIAResponseDTO
+    // Converte o texto JSON
     private ChatIAResponseDTO interpretarResposta(String respostaIaTexto) {
         try {
-            // Remove possíveis blocos de markdown (```json ... ```) que a IA pode incluir
             String textoLimpo = respostaIaTexto
                 .replaceAll("(?i)^```json\\s*", "")
                 .replaceAll("```\\s*$", "")
                 .trim();
 
-            // Converte o JSON para o nosso DTO
-            // O Jackson automaticamente preenche os campos (acao, mensagem, id, filtros)
             JsonNode node = objectMapper.readTree(textoLimpo);
 
             ChatIAResponseDTO dto = new ChatIAResponseDTO();
             dto.setAcao(node.path("acao").asText("chat"));
             dto.setMensagem(node.path("mensagem").asText("Como posso ajudar?"));
 
-            // Preenche o ID do produto (só para ações "produto" e "favoritar")
+            // Preenche o ID do produto só para ações "produto" e "favoritar"
             if (node.has("id")) {
                 dto.setId(node.get("id").asText());
             }
 
-            // Preenche os filtros (só para a ação "filtrar")
+            // Preenche os filtros só para a ação "filtrar"
             if (node.has("filtros")) {
                 JsonNode f = node.get("filtros");
                 ChatIAFiltrosDTO filtros = new ChatIAFiltrosDTO();
@@ -190,7 +172,6 @@ public class ChatIAService {
             return dto;
 
         } catch (Exception e) {
-            // Se a IA retornar algo que não conseguimos parsear, exibimos erro amigável
             ChatIAResponseDTO fallback = new ChatIAResponseDTO();
             fallback.setAcao("chat");
             fallback.setMensagem("Não entendi bem sua solicitação. Pode reformular?");
