@@ -22,12 +22,14 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String gerarToken(Long id, String email, String role, String nome) {
+    public String gerarToken(Long id, String email, String role, String nome, String cpf, String telefone) {
         return Jwts.builder()
                 .subject(String.valueOf(id))
                 .claim("email", email)
                 .claim("role", role)
                 .claim("nome", nome)
+                .claim("cpf", cpf)
+                .claim("telefone", telefone)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getKey())

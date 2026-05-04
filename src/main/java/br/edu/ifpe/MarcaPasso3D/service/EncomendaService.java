@@ -12,8 +12,6 @@ import br.edu.ifpe.MarcaPasso3D.repository.Produto.ProdutoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -122,7 +120,7 @@ public class EncomendaService {
     // ── Helpers ───────────────────────────────────────────────
 
     private String gerarNumeroPedido() {
-        String prefixo = "MP-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM")) + "-";
+        String prefixo = "MP-";
         String numero;
         int tentativas = 0;
         do {

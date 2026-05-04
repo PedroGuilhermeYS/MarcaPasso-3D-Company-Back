@@ -1,5 +1,8 @@
 package br.edu.ifpe.MarcaPasso3D.service;
 
+import br.edu.ifpe.MarcaPasso3D.dto.AlterarEmailDTO;
+import br.edu.ifpe.MarcaPasso3D.dto.AlterarSenhaDTO;
+import br.edu.ifpe.MarcaPasso3D.dto.AtualizarPerfilDTO;
 import br.edu.ifpe.MarcaPasso3D.dto.UsuarioRequestDTO;
 import br.edu.ifpe.MarcaPasso3D.dto.UsuarioResponseDTO;
 import br.edu.ifpe.MarcaPasso3D.model.Usuario;
@@ -75,6 +78,39 @@ public class UsuarioService {
         if (dto.getRole() != null)
             u.setRole(dto.getRole());
 
+        return new UsuarioResponseDTO(repository.save(u));
+    }
+
+    // Atualiza apenas nome e telefone — usado pelo próprio usuário no perfil
+    public UsuarioResponseDTO atualizarPerfil(Long id, AtualizarPerfilDTO dto) {
+        Usuario u = buscarEntidade(id);
+        u.setNome(dto.getNome());
+        u.setTelefone(dto.getTelefone());
+        return new UsuarioResponseDTO(repository.save(u));
+    }
+
+    // Altera a senha confirmando a senha atual primeiro
+    public void alterarSenha(Long id, AlterarSenhaDTO dto) {
+        Usuario u = buscarEntidade(id);
+
+        if (!passwordEncoder.matches(dto.getSenhaAtual(), u.getSenha()))
+            throw new IllegalArgumentException("Senha atual incorreta");
+
+        u.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
+        repository.save(u);
+    }
+
+    // Altera o e-mail confirmando a senha e verificando unicidade
+    public UsuarioResponseDTO alterarEmail(Long id, AlterarEmailDTO dto) {
+        Usuario u = buscarEntidade(id);
+
+        if (!passwordEncoder.matches(dto.getSenha(), u.getSenha()))
+            throw new IllegalArgumentException("Senha incorreta");
+
+        if (repository.existsByEmail(dto.getNovoEmail()))
+            throw new IllegalArgumentException("E-mail já está em uso");
+
+        u.setEmail(dto.getNovoEmail());
         return new UsuarioResponseDTO(repository.save(u));
     }
 
