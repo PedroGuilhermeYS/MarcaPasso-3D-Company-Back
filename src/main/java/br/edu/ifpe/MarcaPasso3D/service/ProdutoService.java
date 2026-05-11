@@ -4,8 +4,10 @@ import br.edu.ifpe.MarcaPasso3D.model.Produto;
 import br.edu.ifpe.MarcaPasso3D.repository.Produto.ProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
@@ -35,8 +37,16 @@ public class ProdutoService {
         return repository.findAllByOrderByPrecoAsc();
     }
 
-    public List<Produto> consultarCarrossel() {
-        return repository.findTop5ByOrderByIdDesc();
+    public List<Produto> consultarCarrossel(String termoPesquisa) {
+        if (termoPesquisa != null && !termoPesquisa.isBlank()) {
+            Pageable top8 = PageRequest.of(0, 8);
+            List<Produto> porTermo = repository.findByTermoParaCarrossel(termoPesquisa.trim(), top8);
+
+            if (!porTermo.isEmpty()) {
+                return porTermo;
+            }
+        }
+        return repository.findTop8ByOrderByTotalVendasDesc();
     }
 
     public List<Produto> consultarNovaTela(String categoria) {
@@ -57,6 +67,12 @@ public class ProdutoService {
         produto.setImagemPrincipal(dados.getImagemPrincipal());
         produto.setPersonalizavel(dados.getPersonalizavel());
         produto.setCategoria(dados.getCategoria());
+        produto.setMaterial(dados.getMaterial());
+        produto.setEstoque(dados.getEstoque());
+
+        if (dados.getResumoIA() != null && !dados.getResumoIA().isBlank()) {
+            produto.setResumoIA(dados.getResumoIA());
+        }
 
         return repository.save(produto);
     }
@@ -65,5 +81,13 @@ public class ProdutoService {
         Produto produto = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto nao encontrado: " + id));
         repository.delete(produto);
+    }
+
+    public void incrementarVendas(Long produtoId, int quantidade) {
+        Produto produto = repository.findById(produtoId)
+                .orElseThrow(() -> new RuntimeException("Produto nao encontrado: " + produtoId));
+        int atual = produto.getTotalVendas() == null ? 0 : produto.getTotalVendas();
+        produto.setTotalVendas(atual + quantidade);
+        repository.save(produto);
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -43,8 +44,9 @@ public class ProdutoController {
     }
 
     @GetMapping("/carrossel")
-    public ResponseEntity<List<Produto>> consultarCarrossel() {
-        return ResponseEntity.ok(service.consultarCarrossel());
+    public ResponseEntity<List<Produto>> consultarCarrossel(
+            @RequestParam(value = "termo", required = false, defaultValue = "") String termo) {
+        return ResponseEntity.ok(service.consultarCarrossel(termo));
     }
 
     @GetMapping("/nova-tela/{categoria}")
