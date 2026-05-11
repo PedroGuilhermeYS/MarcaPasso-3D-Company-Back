@@ -2,6 +2,8 @@ package br.edu.ifpe.MarcaPasso3D.service;
 
 import br.edu.ifpe.MarcaPasso3D.dto.IA.ChatIAFiltrosDTO;
 import br.edu.ifpe.MarcaPasso3D.dto.IA.ChatIAResponseDTO;
+import br.edu.ifpe.MarcaPasso3D.dto.IA.ResumoProdutoRequestDTO;
+import br.edu.ifpe.MarcaPasso3D.dto.IA.ResumoProdutoResponseDTO;
 import br.edu.ifpe.MarcaPasso3D.model.Produto;
 import br.edu.ifpe.MarcaPasso3D.repository.Produto.ProdutoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,34 +28,28 @@ public class ChatIAService {
     private String iaApiKey;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
     private final RestTemplate restTemplate = new RestTemplate();
 
     public ChatIAResponseDTO processar(String mensagemUsuario) {
         try {
-
             List<Produto> produtos = produtoRepository.findAll();
 
             String produtosJson = objectMapper.writeValueAsString(
-                produtos.stream().map(p -> {
-                    // mapa com dados relevantes para a IA
-                    Map<String, Object> dados = new HashMap<>();
-                    dados.put("id", p.getId());
-                    dados.put("nome", p.getNome());
-                    dados.put("categoria", p.getCategoria());
-                    dados.put("preco", p.getPreco());
-                    dados.put("personalizavel", p.getPersonalizavel());
-                    dados.put("descricao", p.getDescricao());
-                    return dados;
-                }).toList()
+                    produtos.stream().map(p -> {
+                        Map<String, Object> dados = new HashMap<>();
+                        dados.put("id", p.getId());
+                        dados.put("nome", p.getNome());
+                        dados.put("categoria", p.getCategoria());
+                        dados.put("preco", p.getPreco());
+                        dados.put("personalizavel", p.getPersonalizavel());
+                        dados.put("descricao", p.getDescricao());
+                        return dados;
+                    }).toList()
             );
 
-            String prompt = montarPrompt(mensagemUsuario, produtosJson);
-
-            // Chamar a API da IA
+            String prompt = montarPromptChat(mensagemUsuario, produtosJson);
             String respostaIa = chamarApiIA(prompt);
-
-            return interpretarResposta(respostaIa);
+            return interpretarRespostaChat(respostaIa);
 
         } catch (Exception e) {
             ChatIAResponseDTO erro = new ChatIAResponseDTO();
@@ -63,8 +59,7 @@ public class ChatIAService {
         }
     }
 
-    // prompt
-    private String montarPrompt(String mensagemUsuario, String produtosJson) {
+    private String montarPromptChat(String mensagemUsuario, String produtosJson) {
         return """
             Você é um assistente virtual da loja MarcaPasso3D, especializada em produtos impressos em 3D.
             Responda SOMENTE com um objeto JSON válido. Sem texto fora do JSON, sem markdown, sem explicações.
@@ -107,44 +102,12 @@ public class ChatIAService {
             Mensagem do cliente: """ + mensagemUsuario;
     }
 
-    // chamada HTTP
-    private String chamarApiIA(String prompt) {
-       
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-       
-        headers.setBearerAuth(iaApiKey);
-
-        Map<String, String> corpo = new HashMap<>();
-        corpo.put("message", prompt);
-
-        HttpEntity<Map<String, String>> requisicao = new HttpEntity<>(corpo, headers);
-
-        ResponseEntity<String> resposta = restTemplate.exchange(
-            "https://apifreellm.com/api/v1/chat",
-            HttpMethod.POST,
-            requisicao,
-            String.class
-        );
-
-        // A resposta da API vem no formato:
-        // { "success": true, "response": "{ json da IA aqui }" }
-        // extrair o campo "response" que contém o JSON da ação
-        try {
-            JsonNode json = objectMapper.readTree(resposta.getBody());
-            return json.get("response").asText();
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao ler resposta da API da IA");
-        }
-    }
-
-    // Converte o texto JSON
-    private ChatIAResponseDTO interpretarResposta(String respostaIaTexto) {
+    private ChatIAResponseDTO interpretarRespostaChat(String respostaIaTexto) {
         try {
             String textoLimpo = respostaIaTexto
-                .replaceAll("(?i)^```json\\s*", "")
-                .replaceAll("```\\s*$", "")
-                .trim();
+                    .replaceAll("(?i)^```json\\s*", "")
+                    .replaceAll("```\\s*$", "")
+                    .trim();
 
             JsonNode node = objectMapper.readTree(textoLimpo);
 
@@ -152,12 +115,10 @@ public class ChatIAService {
             dto.setAcao(node.path("acao").asText("chat"));
             dto.setMensagem(node.path("mensagem").asText("Como posso ajudar?"));
 
-            // Preenche o ID do produto só para ações "produto" e "favoritar"
             if (node.has("id")) {
                 dto.setId(node.get("id").asText());
             }
 
-            // Preenche os filtros só para a ação "filtrar"
             if (node.has("filtros")) {
                 JsonNode f = node.get("filtros");
                 ChatIAFiltrosDTO filtros = new ChatIAFiltrosDTO();
@@ -176,6 +137,69 @@ public class ChatIAService {
             fallback.setAcao("chat");
             fallback.setMensagem("Não entendi bem sua solicitação. Pode reformular?");
             return fallback;
+        }
+    }
+
+    public ResumoProdutoResponseDTO gerarResumoProduto(ResumoProdutoRequestDTO dados) {
+        try {
+            String prompt = montarPromptResumo(dados);
+            String respostaIa = chamarApiIA(prompt);
+
+            String resumo = respostaIa
+                    .replaceAll("(?i)^```[a-z]*\\s*", "")
+                    .replaceAll("```\\s*$", "")
+                    .trim();
+
+            return new ResumoProdutoResponseDTO(resumo);
+
+        } catch (Exception e) {
+            return new ResumoProdutoResponseDTO(
+                    "Não foi possível gerar o resumo no momento. Tente novamente em instantes."
+            );
+        }
+    }
+
+    private String montarPromptResumo(ResumoProdutoRequestDTO d) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Você é um copywriter especialista em e-commerce de produtos impressos em 3D.\n");
+        sb.append("Crie um resumo comercial CURTO (máximo 3 frases) e atraente para o produto abaixo.\n");
+        sb.append("Use linguagem clara, destaque os diferenciais e finalize com um convite à ação.\n");
+        sb.append("Responda APENAS com o texto do resumo, sem introdução, sem aspas, sem JSON.\n\n");
+        sb.append("Dados do produto:\n");
+
+        if (d.getNome() != null)      sb.append("- Nome: ").append(d.getNome()).append("\n");
+        if (d.getCategoria() != null) sb.append("- Categoria: ").append(d.getCategoria()).append("\n");
+        if (d.getMaterial() != null)  sb.append("- Material: ").append(d.getMaterial()).append("\n");
+        if (d.getPreco() != null)     sb.append("- Preço: R$ ").append(d.getPreco()).append("\n");
+        if (d.getDescricao() != null) sb.append("- Descrição técnica: ").append(d.getDescricao()).append("\n");
+
+        return sb.toString();
+    }
+
+    // Chamada HTTP compartilhada para a API da IA
+
+    private String chamarApiIA(String prompt) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(iaApiKey);
+
+        Map<String, String> corpo = new HashMap<>();
+        corpo.put("message", prompt);
+
+        HttpEntity<Map<String, String>> requisicao = new HttpEntity<>(corpo, headers);
+
+        ResponseEntity<String> resposta = restTemplate.exchange(
+                "https://apifreellm.com/api/v1/chat",
+                HttpMethod.POST,
+                requisicao,
+                String.class
+        );
+
+        try {
+            JsonNode json = objectMapper.readTree(resposta.getBody());
+            return json.get("response").asText();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao ler resposta da API da IA");
         }
     }
 }
