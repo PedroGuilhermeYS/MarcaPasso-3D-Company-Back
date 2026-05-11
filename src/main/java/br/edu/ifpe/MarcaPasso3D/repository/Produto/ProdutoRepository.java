@@ -19,8 +19,6 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
 
     List<Produto> findAllByOrderByPrecoAsc();
 
-    List<Produto> findTop5ByOrderByIdDesc();
-
     List<Produto> findByCategoria(String categoria);
 
     List<Produto> findTop8ByOrderByTotalVendasDesc();
