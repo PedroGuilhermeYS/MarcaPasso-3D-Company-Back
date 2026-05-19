@@ -21,11 +21,13 @@ public class EncomendaService {
 
     private final EncomendaRepository encomendaRepository;
     private final ProdutoRepository produtoRepository;
+    private final ProdutoService produtoService;
 
     public EncomendaService(EncomendaRepository encomendaRepository,
-                             ProdutoRepository produtoRepository) {
+                             ProdutoRepository produtoRepository, ProdutoService produtoService) {
         this.encomendaRepository = encomendaRepository;
         this.produtoRepository = produtoRepository;
+        this.produtoService = produtoService;
     }
 
     // ── GET: listar resumo de pedidos do usuário ──────────────
@@ -100,6 +102,8 @@ public class EncomendaService {
             for (CriarEncomendaDTO.ItemDTO itemDTO : dto.getItens()) {
                 Produto produto = produtoRepository.findById(itemDTO.getIdProduto())
                         .orElseThrow(() -> new RuntimeException("Produto não encontrado: " + itemDTO.getIdProduto()));
+
+                produtoService.incrementarVendas(itemDTO.getIdProduto(), itemDTO.getQuantidade());
 
                 EncomendaItem item = new EncomendaItem();
                 item.setEncomenda(salva);
