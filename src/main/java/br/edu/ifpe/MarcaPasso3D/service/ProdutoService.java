@@ -8,6 +8,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import br.edu.ifpe.MarcaPasso3D.dto.IA.ResumoProdutoRequestDTO;
+import br.edu.ifpe.MarcaPasso3D.dto.IA.ResumoProdutoResponseDTO;
+
 import java.util.List;
 
 @Service
@@ -15,6 +18,9 @@ public class ProdutoService {
 
     @Autowired
     private ProdutoRepository repository;
+
+    @Autowired
+    private ChatIAService chatIAService;
 
     public Page<Produto> consultarHome(Pageable pageable) {
         return repository.findAll(pageable);
@@ -54,6 +60,17 @@ public class ProdutoService {
     }
 
     public Produto cadastrar(Produto produto) {
+        if (produto.getResumoIA() == null || produto.getResumoIA().isBlank()) {
+            ResumoProdutoRequestDTO dto = new ResumoProdutoRequestDTO();
+            dto.setNome(produto.getNome());
+            dto.setCategoria(produto.getCategoria());
+            dto.setMaterial(produto.getMaterial());
+            dto.setPreco(produto.getPreco());
+            dto.setDescricao(produto.getDescricao());
+
+            ResumoProdutoResponseDTO resumo = chatIAService.gerarResumoProduto(dto);
+            produto.setResumoIA(resumo.getResumo());
+        }
         return repository.save(produto);
     }
 

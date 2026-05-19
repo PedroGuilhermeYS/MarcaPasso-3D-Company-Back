@@ -48,6 +48,8 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.PUT, "/produtos/**").permitAll()
 
+                        .requestMatchers(HttpMethod.POST, "/produtos").permitAll()
+
                         // IA: qualquer um pode usar o chat (mesmo sem login)
                         // A chave da API fica protegida no backend — não há risco de exposição
                         .requestMatchers(HttpMethod.POST, "/chat-ia/**").permitAll()
