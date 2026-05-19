@@ -49,6 +49,7 @@ public class JwtUtil {
             Claims claims = extrairClaims(token);
             return claims.getExpiration().after(new Date());
         } catch (Exception e) {
+            System.err.println(">>> JWT INVALIDO: " + e.getClass().getSimpleName() + " - " + e.getMessage());
             return false;
         }
     }
