@@ -30,30 +30,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
-        System.err.println(">>> REQUEST: " + request.getMethod() + " " + request.getRequestURI());
-        System.err.println(">>> AUTH HEADER: " + authHeader);
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            System.err.println(">>> TOKEN INICIO: " + token.substring(0, Math.min(20, token.length())));
 
             boolean valido = jwtUtil.isValido(token);
-            System.err.println(">>> TOKEN VALIDO: " + valido);
 
             if (valido) {
                 Claims claims = jwtUtil.extrairClaims(token);
                 String email = claims.get("email", String.class);
                 String role = claims.get("role", String.class);
-                System.err.println(">>> EMAIL: " + email + " | ROLE: " + role);
-                System.err.println(">>> AUTHORITY: ROLE_" + role.toUpperCase());
 
                 var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
                 var auth = new UsernamePasswordAuthenticationToken(email, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(auth);
-                System.err.println(">>> AUTH SETADA NO CONTEXTO: " + auth.getAuthorities());
             }
-        } else {
-            System.err.println(">>> SEM BEARER TOKEN NA REQUISICAO");
         }
 
         filterChain.doFilter(request, response);
