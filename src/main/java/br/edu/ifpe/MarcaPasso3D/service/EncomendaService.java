@@ -12,6 +12,8 @@ import br.edu.ifpe.MarcaPasso3D.repository.Produto.ProdutoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -22,12 +24,16 @@ public class EncomendaService {
     private final EncomendaRepository encomendaRepository;
     private final ProdutoRepository produtoRepository;
     private final ProdutoService produtoService;
+    private final TelegramService telegramService;
 
     public EncomendaService(EncomendaRepository encomendaRepository,
-                             ProdutoRepository produtoRepository, ProdutoService produtoService) {
+                             ProdutoRepository produtoRepository,
+                             ProdutoService produtoService,
+                             TelegramService telegramService) {
         this.encomendaRepository = encomendaRepository;
         this.produtoRepository = produtoRepository;
         this.produtoService = produtoService;
+        this.telegramService = telegramService;
     }
 
     // ── GET: listar resumo de pedidos do usuário ──────────────
@@ -41,8 +47,7 @@ public class EncomendaService {
                         e.getDataHora(),
                         e.getFormaPagamento(),
                         e.getStatus(),
-                        e.getTotal()
-                ))
+                        e.getTotal()))
                 .collect(Collectors.toList());
     }
 
@@ -98,6 +103,9 @@ public class EncomendaService {
         Encomenda salva = encomendaRepository.save(encomenda);
 
         // Itens
+        String fotoUrl = null;
+        StringBuilder listaItens = new StringBuilder();
+
         if (dto.getItens() != null) {
             for (CriarEncomendaDTO.ItemDTO itemDTO : dto.getItens()) {
                 Produto produto = produtoRepository.findById(itemDTO.getIdProduto())
@@ -114,9 +122,61 @@ public class EncomendaService {
                         : produto.getPreco());
 
                 salva.getItens().add(item);
+
+                // Pega a foto do primeiro produto para o Telegram
+                if (fotoUrl == null && produto.getImagemPrincipal() != null) {
+                    fotoUrl = produto.getImagemPrincipal();
+                }
+
+                // Monta lista de itens para a mensagem
+                listaItens.append("  • ")
+                          .append(produto.getNome())
+                          .append(" x").append(itemDTO.getQuantidade())
+                          .append(" — R$ ").append(item.getPrecoUnitario())
+                          .append("\n");
             }
             encomendaRepository.save(salva);
         }
+
+        // ── Notificação Telegram ──────────────────────────────
+        String dataHora = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm"));
+
+        String endereco = salva.getEndRua() + ", " + salva.getEndNumero()
+                + (salva.getEndComplemento() != null && !salva.getEndComplemento().isBlank()
+                    ? " - " + salva.getEndComplemento() : "")
+                + "\n  " + salva.getEndBairro()
+                + " — " + salva.getEndCidade() + "/" + salva.getEndEstado()
+                + " — CEP: " + salva.getEndCep();
+
+        String mensagem =
+            "━━━━━━━━━━━━━━━━━━━━━━━\n" +
+            "🛍️ <b>NOVO PEDIDO RECEBIDO</b>\n" +
+            "━━━━━━━━━━━━━━━━━━━━━━━\n\n" +
+
+            "🔢 <b>Pedido:</b> " + salva.getNumeroPedido() + "\n" +
+            "📅 <b>Data:</b> " + dataHora + "\n\n" +
+
+            "👤 <b>CLIENTE</b>\n" +
+            "Nome: " + salva.getClienteNome() + "\n" +
+            "Email: " + salva.getClienteEmail() + "\n\n" +
+
+            "📦 <b>ITENS</b>\n" +
+            listaItens +
+
+            "\n💳 <b>PAGAMENTO</b>\n" +
+            "Forma: " + salva.getFormaPagamento() + "\n" +
+            "Subtotal: R$ " + salva.getSubtotal() + "\n" +
+            "Frete: R$ " + salva.getFrete() + "\n" +
+            (salva.getDescontoCupom() != null && salva.getDescontoCupom().compareTo(java.math.BigDecimal.ZERO) > 0
+                ? "Desconto: -R$ " + salva.getDescontoCupom() + "\n" : "") +
+            "<b>Total: R$ " + salva.getTotal() + "</b>\n\n" +
+
+            "🚚 <b>ENTREGA</b>\n" +
+            endereco + "\n\n" +
+
+            "⏳ <b>Status:</b> PENDENTE";
+
+        telegramService.enviarMensagemComFoto(fotoUrl, mensagem);
 
         return toDetalheDTO(salva);
     }
@@ -130,7 +190,8 @@ public class EncomendaService {
         do {
             numero = prefixo + String.format("%05d", ThreadLocalRandom.current().nextInt(1, 99999));
             tentativas++;
-            if (tentativas > 10) throw new RuntimeException("Não foi possível gerar número de pedido único");
+            if (tentativas > 10)
+                throw new RuntimeException("Não foi possível gerar número de pedido único");
         } while (encomendaRepository.existsByNumeroPedido(numero));
         return numero;
     }
@@ -175,8 +236,7 @@ public class EncomendaService {
                         item.getProduto().getNome(),
                         item.getProduto().getImagemPrincipal(),
                         item.getQuantidade(),
-                        item.getPrecoUnitario()
-                ))
+                        item.getPrecoUnitario()))
                 .collect(Collectors.toList());
 
         dto.setItens(itensDTO);
