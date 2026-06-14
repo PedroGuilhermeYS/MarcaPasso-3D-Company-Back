@@ -40,23 +40,20 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Autenticação: qualquer um pode fazer login/cadastro
+                        .requestMatchers("/actuator/health").permitAll()
+
                         .requestMatchers("/auth/**").permitAll()
 
-                        // Produtos: qualquer um pode ver (leitura pública)
                         .requestMatchers(HttpMethod.GET, "/produtos", "/produtos/**").permitAll()
 
-                        // Cupons: leitura autenticada; criação/atualização/exclusão somente ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/cupons", "/api/cupons/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/cupons", "/api/cupons/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/cupons", "/api/cupons/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/cupons", "/api/cupons/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/cupons", "/api/cupons/**").hasRole("ADMIN")
 
-                        // IA: qualquer um pode usar o chat (mesmo sem login)
                         .requestMatchers(HttpMethod.POST, "/chat-ia").permitAll()
 
-                        // Todo o restante exige autenticação
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
