@@ -1,11 +1,3 @@
--- se precisar resetar a tabela (meu docker deu problema DE NOVO)
-
--- roda esses comandos:
--- docker cp src/main/resources/data.sql marcapasso3d-db:/data.sql
--- docker exec marcapasso3d-db psql -U admin -d marcapasso3d -f /data.sql
-
-TRUNCATE TABLE produtos RESTART IDENTITY CASCADE;
-
 INSERT INTO produtos (nome, descricao, resumo_ia, preco, imagem_principal, personalizavel, categoria, material, estoque, total_vendas) VALUES
 
 ('Luminária 3D',
