@@ -52,6 +52,25 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/cupons", "/api/cupons/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/cupons", "/api/cupons/**").hasRole("ADMIN")
 
+                        // Cupons: leitura autenticada; escrita somente ADMIN
+                        .requestMatchers(HttpMethod.GET,    "/api/cupons", "/api/cupons/**").authenticated()
+                        .requestMatchers(HttpMethod.POST,   "/api/cupons", "/api/cupons/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/cupons", "/api/cupons/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH,  "/api/cupons", "/api/cupons/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/cupons", "/api/cupons/**").hasRole("ADMIN")
+
+                        // Pedidos personalizados — rotas do usuário (autenticado)
+                        .requestMatchers(HttpMethod.POST, "/api/personalizados/**").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/personalizados/{idUsuario}").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/api/personalizados/{idUsuario}/**").authenticated()
+
+                        // Pedidos personalizados — rotas do admin
+                        .requestMatchers(HttpMethod.GET,    "/api/personalizados").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,    "/api/personalizados/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH,  "/api/personalizados/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/personalizados/admin/**").hasRole("ADMIN")
+
+                        // IA: qualquer um pode usar o chat (mesmo sem login)
                         .requestMatchers(HttpMethod.POST, "/chat-ia").permitAll()
 
                         .anyRequest().authenticated()
