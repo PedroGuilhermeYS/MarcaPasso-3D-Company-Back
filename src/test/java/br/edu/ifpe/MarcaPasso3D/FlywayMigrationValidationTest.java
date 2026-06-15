@@ -18,7 +18,7 @@ class FlywayMigrationValidationTest {
     private JdbcTemplate jdbc;
 
     // =========================================================
-    // 1. HISTÓRICO DO FLYWAY (via SQL direto)
+    // 1. HISTÓRICO DO FLYWAY
     // =========================================================
 
     @Test
