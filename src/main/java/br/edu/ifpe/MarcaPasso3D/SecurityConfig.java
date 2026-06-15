@@ -64,7 +64,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH,  "/api/personalizados/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/personalizados/admin/**").hasRole("ADMIN")
 
-                        // IA: qualquer um pode usar o chat (mesmo sem login)
+                        // Fretes: leitura é pública; escrita somente ADMIN
+                        .requestMatchers(HttpMethod.GET,    "/fretes", "/fretes/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,   "/fretes", "/fretes/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/fretes", "/fretes/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/fretes", "/fretes/**").hasRole("ADMIN")
+
+  
                         .requestMatchers(HttpMethod.POST, "/chat-ia").permitAll()
 
                         // Todo o restante exige autenticação
