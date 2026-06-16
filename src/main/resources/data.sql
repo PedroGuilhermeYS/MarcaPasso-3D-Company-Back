@@ -4,6 +4,26 @@
 -- docker cp src/main/resources/data.sql marcapasso3d-db:/data.sql
 -- docker exec marcapasso3d-db psql -U admin -d marcapasso3d -f /data.sql
 
+-- VERIFIQUE A TABELA DE CEPS::
+CREATE TABLE IF NOT EXISTS ceps (
+    id_cep              SERIAL PRIMARY KEY,
+    cep                 VARCHAR(9)     NOT NULL UNIQUE,
+    cidade              VARCHAR(255)   NOT NULL,
+    preco               NUMERIC(10, 2) NOT NULL,
+    prazo_entrega_dias  INTEGER        NOT NULL,
+    criado_em           TIMESTAMP,
+    atualizado_em       TIMESTAMP
+);
+ 
+INSERT INTO ceps (cep, cidade, preco, prazo_entrega_dias, criado_em, atualizado_em) VALUES
+    ('55535000', 'Joaquim Nabuco - PE', 25.00, 5, NOW(), NOW()),
+    ('51160220', 'Recife - PE',         15.00, 7, NOW(), NOW()),
+    ('55578000', 'Amendaraé - PE',      30.00, 6, NOW(), NOW()),
+    ('55520330', 'Ribeirão - PE',       25.00, 5, NOW(), NOW()),
+    ('55540000', 'Palmares - PE',       15.00, 7, NOW(), NOW()),
+    ('55550000', 'Água Preta - PE',     30.00, 6, NOW(), NOW())
+ON CONFLICT (cep) DO NOTHING;
+
 TRUNCATE TABLE produtos RESTART IDENTITY CASCADE;
 
 INSERT INTO produtos (nome, descricao, resumo_ia, preco, imagem_principal, personalizavel, categoria, material, estoque, total_vendas) VALUES
